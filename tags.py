@@ -16,7 +16,7 @@ def object_details(inst, idkey="InstanceId", tagkey='Tags'):
     '''Display an instances details'''
     dispinst = {}
     dispinst[idkey] = inst[idkey]
-    dispinst['Name'] = get_tag(inst[tagkey], 'Name')
+    dispinst['Name'] = get_tag(inst[tagkey])
     req_tags = [
         'Ansible',
         'CS-ENV',
@@ -78,10 +78,9 @@ def describe_ec2(filter_text):
     results = [object_details(image, "ImageId") for image in response['Images']]
     csv_out(results, 'images.csv')
 
-    response = ec2.describe_network_interfaces(Filters=[
-        {'Name': 'tag:Name', 'Values': [filter_text]}
-    ])
-    results = [object_details(nic, "NetworkInterfaceId", 'TagSet') for nic in response['NetworkInterfaces']]
+    response = ec2.describe_network_interfaces()
+    print(response['NetworkInterfaces'])
+    results = [object_details(nic, "NetworkInterfaceId", "TagSet") for nic in response['NetworkInterfaces']]
     csv_out(results, 'nics.csv')
 
 
@@ -96,7 +95,7 @@ def describe_lbs(filter_text):
 
     lb2 = boto3.client('elbv2')
     response = lb2.describe_load_balancers()
-    print(response['LoadBalancers'])
+    # print(response['LoadBalancers'])
     results = [object_details(lb2.describe_tags(ResourceArns=[onelb['LoadBalancerArn']])['TagDescriptions'][0], "ResourceArn") for onelb in response['LoadBalancers']]
     csv_out(results, 'lbsv2.csv')
 
@@ -115,13 +114,14 @@ def csv_out(instances, csv_file="data.csv"):
     aws_env = os.environ.get('AWS_PROFILE', 'DEV')
     csv_file = ("{}-{}".format(aws_env, csv_file))
 
-    try:
-        with open(csv_file, 'w') as myfile:
-            wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+    #try:
+    with open(csv_file, 'w') as myfile:
+        wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+        if len(instances) > 0:
             wr.writerow(instances[0].keys())
             _ = [wr.writerow(instance.values()) for instance in sorted(instances, key=lambda k: k['Name'])]
-    except:
-        pass
+    # except:
+    #     pass
 
 
 if __name__ == '__main__':
