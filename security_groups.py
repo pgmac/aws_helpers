@@ -11,8 +11,8 @@ def main(filter_text="*"):
     try:
         response = ec2.describe_security_groups(Filters=[{'Name': 'tag:Name','Values': [filter_text]}])
         if len(response['SecurityGroups']) == 0 and filter_text[:3] == 'sg-':
-        	response = ec2.describe_security_groups(GroupIds=[filter_text])
-	
+            response = ec2.describe_security_groups(GroupIds=[filter_text])
+
         #pprint(response['SecurityGroups'])
         for group in sorted(response['SecurityGroups'], key=lambda k: k['Description']):
             print("{}: {}".format(group['GroupId'], group['Description']))
