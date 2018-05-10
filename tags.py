@@ -9,7 +9,8 @@ import sys
 def get_tag(arr, tagname='Name'):
     '''Just get a single tag'''
     for tag in arr:
-        if tag['Key'] == tagname: return tag['Value']
+        if tag['Key'] == tagname:
+            return tag['Value']
 
 
 def object_details(inst, idkey="InstanceId", tagkey='Tags'):
@@ -46,10 +47,11 @@ def object_details(inst, idkey="InstanceId", tagkey='Tags'):
 def describe_ec2(filter_text):
     '''List AWS EC2 instances'''
     import boto3
+
     ec2 = boto3.client('ec2')
     response = ec2.describe_instances(Filters=[
         {'Name': 'tag:Name', 'Values': [filter_text]}
-    ]) 
+    ])
     results = [object_details(item) for res in response['Reservations']
                                       for item in res['Instances']]
     csv_out(results, 'ec2.csv')
@@ -114,14 +116,13 @@ def csv_out(instances, csv_file="data.csv"):
     aws_env = os.environ.get('AWS_PROFILE', 'DEV')
     csv_file = ("{}-{}".format(aws_env, csv_file))
 
-    #try:
     with open(csv_file, 'w') as myfile:
         wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
-        if len(instances) > 0:
+        try:
             wr.writerow(instances[0].keys())
             _ = [wr.writerow(instance.values()) for instance in sorted(instances, key=lambda k: k['Name'])]
-    # except:
-    #     pass
+        except:
+            pass
 
 
 if __name__ == '__main__':
