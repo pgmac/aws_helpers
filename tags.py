@@ -12,11 +12,11 @@ def get_tag(arr, tagname='Name'):
         if tag['Key'] == tagname: return tag['Value']
 
 
-def object_details(inst, idkey="InstanceId"):
+def object_details(inst, idkey="InstanceId", tagkey='Tags'):
     '''Display an instances details'''
     dispinst = {}
     dispinst[idkey] = inst[idkey]
-    dispinst['Name'] = get_tag(inst['Tags'], 'Name')
+    dispinst['Name'] = get_tag(inst[tagkey], 'Name')
     req_tags = [
         'Ansible',
         'CS-ENV',
@@ -38,7 +38,7 @@ def object_details(inst, idkey="InstanceId"):
         'CS-UTILITY-REPOSITORY'
     ]
     for tag in req_tags:
-        dispinst[tag] = get_tag(inst['Tags'], tag)
+        dispinst[tag] = get_tag(inst[tagkey], tag)
 
     return(dispinst)
 
@@ -75,20 +75,30 @@ def describe_ec2(filter_text):
     response = ec2.describe_images(Filters=[
         {'Name': 'tag:Name', 'Values': [filter_text]}
     ])
-    #print(response)
     results = [object_details(image, "ImageId") for image in response['Images']]
-    #print(results)
     csv_out(results, 'images.csv')
+
+    response = ec2.describe_network_interfaces(Filters=[
+        {'Name': 'tag:Name', 'Values': [filter_text]}
+    ])
+    results = [object_details(nic, "NetworkInterfaceId", 'TagSet') for nic in response['NetworkInterfaces']]
+    csv_out(results, 'nics.csv')
 
 
 def describe_lbs(filter_text):
     '''List AWS load balancers'''
     import boto3
     lb = boto3.client('elb')
+
     response = lb.describe_load_balancers()
-    print(response)
-    results = [object_details(lb.describe_tags(LoadBalancerNames=[onelb['LoadBalancerName']])['TagDescriptions'], "LoadBalancerName") for onelb in response['LoadBalancerDescriptions']]
+    results = [object_details(lb.describe_tags(LoadBalancerNames=[onelb['LoadBalancerName']])['TagDescriptions'][0], "LoadBalancerName") for onelb in response['LoadBalancerDescriptions']]
     csv_out(results, 'lbs.csv')
+
+    lb2 = boto3.client('elbv2')
+    response = lb2.describe_load_balancers()
+    print(response['LoadBalancers'])
+    results = [object_details(lb2.describe_tags(ResourceArns=[onelb['LoadBalancerArn']])['TagDescriptions'][0], "ResourceArn") for onelb in response['LoadBalancers']]
+    csv_out(results, 'lbsv2.csv')
 
 
 def describe_aws(filter_text):
