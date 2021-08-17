@@ -1,9 +1,10 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 '''EC2 ssh with filter'''
 
 
 import sys
 import argparse
+import os
 from subprocess import Popen
 
 
@@ -31,7 +32,7 @@ def describe_ec2(filter_args):
     import boto3
     ec2 = boto3.client('ec2')
     for text in filter_args.text:
-        response = ec2.describe_instances(Filters=[{'Name': 'tag:Name','Values': [text]},{'Name': 'instance-state-name', 'Values': ['running']}])
+        response = ec2.describe_instances(Filters=[{'Name': 'network-interface.addresses.private-ip-address' if filter_args.ip else 'tag:Name','Values': [text]},{'Name': 'instance-state-name', 'Values': ['running']}])
         results = [display_instance(item) for res in response['Reservations']
                                           for item in res['Instances']]
         ssh_ec2(results, filter_args)
@@ -47,8 +48,9 @@ def ssh_ec2(instances, fargs):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("text", help="String to search for in the NAME tag of EC2 instances", nargs="+")
+    parser.add_argument("-i", "--ip", help="Search for the IP address of matching EC2 instance(s)", action="store_true")
     parser.add_argument("-c", "--connect", help="Connect via SSH to the EC2 instance(s)", action="store_true")
-    parser.add_argument("-u", "--user", help="User to connect as", default="pmacdonnell")
+    parser.add_argument("-u", "--user", help="User to connect as", default=os.environ.get('USER'))
     args = parser.parse_args()
     #results = [describe_ec2(text) for text in sys.argv[1:]]
     describe_ec2(args)
