@@ -39,7 +39,7 @@ def describe_ec2(filter_args):
 
     ec2 = boto3.client('ec2')
     for text in filter_args.text:
-        response = ec2.describe_instances(Filters=[{'Name': _filter_name, 'Values': [text]}, {'Name': 'instance-state-name', 'Values': ['running']}])
+        response = ec2.describe_instances(Filters=[{'Name': _filter_name, 'Values': ["*{}*".format(text)]}, {'Name': 'instance-state-name', 'Values': ['running']}])
         results = [display_instance(item) for res in response['Reservations']
                                           for item in res['Instances']]
         ssh_ec2(results, filter_args)
