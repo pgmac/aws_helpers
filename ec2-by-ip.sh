@@ -47,7 +47,7 @@ fi
 
 echo "Searching ${filter} for ${searchstr}"
 
-aws ec2 describe-instances --output json --filter "Name=${filter}, Values=${searchstr}" --query 'Reservations[*].Instances[*].{Name:Tags[?Key==`Name`]|[0].Value,InstanceId:InstanceId,State:State.Name, IP:NetworkInterfaces[0].PrivateIpAddress}'
+aws ec2 describe-instances --output json --filter "Name=${filter}, Values=${searchstr}" --query 'Reservations[*].Instances[*].{Name:Tags[?Key==`Name`]|[0].Value, InstanceId: InstanceId, State: State.Name, IP: NetworkInterfaces[0].PrivateIpAddress, EIP: PublicIpAddress}'
 
 #####
 # Reference bits
