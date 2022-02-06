@@ -87,7 +87,7 @@ if __name__ == '__main__':
     parser.add_argument("-p", "--privateip", help="Search for EC2 instance(s) using the IP address", action="store_true")
     parser.add_argument("-c", "--connect", "--ssh", help="Connect via SSH to the EC2 instance(s)", action="store_true")
     parser.add_argument("-s", "--ssm", help="Connect via a SSM Session to the EC2 instance(s)", action="store_true")
-    parser.add_argument("-u", "--user", help="User to connect as")
+    parser.add_argument("-u", "--user", help="User to connect as (SSH only)")
     args = parser.parse_args()
     #results = [describe_ec2(text) for text in argv[1:]]
     describe_ec2(args)
