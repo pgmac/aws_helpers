@@ -120,7 +120,7 @@ def ssm_ec2(instances, fargs):
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument("text", help="String to search for in the NAME tag of EC2 instances", nargs="+")
-    parser.add_argument("--all", help="When True: Connect to all EC2 instances searched for. When False: Interactively select which instance to connect to", action="store_true", default=False)
+    parser.add_argument("--all", help="When True: Connect to all EC2 instances searched for. When False: Interactively select which instance to connect to. Default: False", action="store_true", default=False)
     instance = parser.add_mutually_exclusive_group()
     instance.add_argument("-i", "--instanceid", help="Search for EC2 instance(s) using the Instance ID", action="store_true")
     instance.add_argument("-p", "--privateip", help="Search for EC2 instance(s) using the IP address", action="store_true")
