@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-'''EC2 ssh with filter'''
+'''Filter your list of EC2s to connect to, either via SSH or SSM'''
 
 
 from sys import argv
@@ -43,6 +43,7 @@ def describe_ec2(filter_args):
 
     ec2 = boto3.client('ec2')
     for text in filter_args.text:
+        #print(f"Searching for EC2 instances matching '*{text}*'")
         response = ec2.describe_instances(Filters=[{'Name': _filter_name, 'Values': ["*{}*".format(text)]}, {'Name': 'instance-state-name', 'Values': ['running']}])
         results = [display_instance(item) for res in response['Reservations']
                    for item in res['Instances']]
@@ -53,6 +54,7 @@ def describe_ec2(filter_args):
             if len(results) > 1: results = select_ec2(results)
 
         if len(results) > 0 :
+            #print("Taking you to {} ({})".format(results['Name'], results['InstanceId']))
             if filter_args.ssh:
                 ssh_ec2(results, filter_args)
             if filter_args.ssm:
@@ -101,7 +103,7 @@ def ssh_ec2(instances, fargs):
         elif system() == "Linux":
             _ = [sysexec("{}ssh {}".format(fargs.user, server['PrivateIpAddress'])) for server in instances]
         else:
-            print("Don't know how to termianl on this system")
+            print("Don't know how to terminal on this system")
             exit(10)
     else:
         _ = [sysexec("{}ssh {}".format(fargs.user, server['PrivateIpAddress'])) for server in instances]
@@ -129,5 +131,6 @@ if __name__ == '__main__':
     connection.add_argument("--ssh", help="Connect via SSH to the EC2 instance(s)", action="store_true", default=False)
     parser.add_argument("-u", "--user", help="User to connect as (SSH only)")
     parser.add_argument("-w", "--window", help="Open the connection in a new window", action="store_true", default=False)
+    parser.add_argument("-c", "--case-sensitive", help="Perform a case-sensitive seearch", action="store_true", default=False)
     args = parser.parse_args()
     describe_ec2(args)
