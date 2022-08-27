@@ -31,6 +31,15 @@ def display_instance(inst):
     return(dispinst)
 
 
+def case_insensivise(case_str):
+    '''Return common character case variants for a string'''
+    str_arr = []
+    str_arr.append("*{}*".format(case_str.lower()))
+    str_arr.append("*{}*".format(case_str.capitalize()))
+    str_arr.append("*{}*".format(case_str.upper()))
+
+    return(str_arr)
+
 def describe_ec2(filter_args):
     '''List AWS EC2 instances'''
     import boto3
@@ -44,7 +53,18 @@ def describe_ec2(filter_args):
     ec2 = boto3.client('ec2')
     for text in filter_args.text:
         #print(f"Searching for EC2 instances matching '*{text}*'")
-        response = ec2.describe_instances(Filters=[{'Name': _filter_name, 'Values': ["*{}*".format(text)]}, {'Name': 'instance-state-name', 'Values': ['running']}])
+        response = ec2.describe_instances(
+		Filters=[
+			{
+				'Name': _filter_name,
+				'Values': case_insensivise(text)
+			},
+			{
+				'Name': 'instance-state-name',
+				'Values': ['running']
+			}
+		]
+	)
         results = [display_instance(item) for res in response['Reservations']
                    for item in res['Instances']]
         results = sorted(results, key=lambda k: (k['Name'], k['InstanceId']))
@@ -113,7 +133,7 @@ def ssm_ec2(instances, fargs):
     '''Connect to the EC2 instance(s) via an SSM Session'''
 
     if fargs.window:
-        # Open a new terminal window
+        # Open a new terminal window - it doesn't do it yet, but it will do .... someday
         _ = [sysexec("aws ssm start-session --target {}".format(server['InstanceId'])) for server in instances]
     else:
         _ = [sysexec("aws ssm start-session --target {}".format(server['InstanceId'])) for server in instances]
