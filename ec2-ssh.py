@@ -54,24 +54,25 @@ def describe_ec2(filter_args):
     for text in filter_args.text:
         #print(f"Searching for EC2 instances matching '*{text}*'")
         response = ec2.describe_instances(
-		Filters=[
-			{
-				'Name': _filter_name,
-				'Values': case_insensivise(text)
-			},
-			{
-				'Name': 'instance-state-name',
-				'Values': ['running']
-			}
-		]
-	)
+            Filters=[
+                {
+                    'Name': _filter_name,
+                    'Values': case_insensivise(text)
+                },
+                {
+                    'Name': 'instance-state-name',
+                    'Values': ['running']
+                }
+            ]
+	    )
         results = [display_instance(item) for res in response['Reservations']
                    for item in res['Instances']]
         results = sorted(results, key=lambda k: (k['Name'], k['InstanceId']))
         if filter_args.all and not filter_args.ssh and not filter_args.ssm:
             list_ec2(results)
         else:
-            if len(results) > 1: results = select_ec2(results)
+            # if len(results) > 1: results = select_ec2(results)
+            results = select_ec2(results)
 
         if len(results) > 0 :
             #print("Taking you to {} ({})".format(results['Name'], results['InstanceId']))
