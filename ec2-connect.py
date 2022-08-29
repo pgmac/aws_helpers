@@ -25,29 +25,36 @@ def display_instance(inst):
     '''Display an instances details'''
     dispinst = {}
     dispinst['PrivateIpAddress'] = inst['PrivateIpAddress']
+    dispinst['PublicIpAddress'] = inst['PublicIpAddress']
     dispinst['KeyName'] = inst.get('KeyName', 'ansible_ec2_key')
     dispinst['InstanceId'] = inst['InstanceId']
     dispinst['Name'] = get_tag(inst['Tags'], 'Name')
-    return(dispinst)
+    return (dispinst)
 
 
 def case_insensivise(case_str):
     '''Return common character case variants for a string'''
+
     str_arr = []
+    str_arr.append("*{}*".format(case_str))
     str_arr.append("*{}*".format(case_str.lower()))
     str_arr.append("*{}*".format(case_str.capitalize()))
     str_arr.append("*{}*".format(case_str.upper()))
 
-    return(str_arr)
+    return (str_arr)
+
 
 def describe_ec2(filter_args):
     '''List AWS EC2 instances'''
     import boto3
 
-    _filter_name = 'tag:Name'
-    if filter_args.privateip:
+    if filter_args.search == 'Name':
+        _filter_name = 'tag:Name'
+    elif filter_args.search == 'PublicIp':
+        _filter_name = 'network-interface.addresses.public-ip-address'
+    elif filter_args.search == 'PrivateIp':
         _filter_name = 'network-interface.addresses.private-ip-address'
-    if filter_args.instanceid:
+    elif filter_args.search == 'InstanceId':
         _filter_name = 'instance-id'
 
     ec2 = boto3.client('ec2')
@@ -64,24 +71,37 @@ def describe_ec2(filter_args):
                     'Values': ['running']
                 }
             ]
-	    )
+        )
         results = [display_instance(item) for res in response['Reservations']
                    for item in res['Instances']]
         results = sorted(results, key=lambda k: (k['Name'], k['InstanceId']))
         if filter_args.all and not filter_args.ssh and not filter_args.ssm:
             list_ec2(results)
         else:
-            # if len(results) > 1: results = select_ec2(results)
-            results = select_ec2(results)
+            if len(results) > 0:
+                results = select_ec2(results)
 
-        if len(results) > 0 :
-            #print("Taking you to {} ({})".format(results['Name'], results['InstanceId']))
-            if filter_args.ssh:
-                ssh_ec2(results, filter_args)
-            if filter_args.ssm:
-                ssm_ec2(results, filter_args)
-        else:
-            print("No instances found to connect to")
+        return results
+
+
+def connect_instance_ssh(results, filter_args):
+    '''Connect to AWS EC2 instance(s)'''
+
+    if len(results) > 0:
+        #print("Taking you to {} ({})".format(results['Name'], results['InstanceId']))
+        ssh_ec2(results, filter_args)
+    else:
+        print("No instances found to connect to")
+
+
+def connect_instance_ssm(results, filter_args):
+    '''Connect to AWS EC2 instance(s)'''
+
+    if len(results) > 0:
+        #print("Taking you to {} ({})".format(results['Name'], results['InstanceId']))
+        ssm_ec2(results, filter_args)
+    else:
+        print("No instances found to connect to")
 
 
 def select_ec2(instances):
@@ -90,10 +110,9 @@ def select_ec2(instances):
     terminal_menu = TerminalMenu(options)
     menu_entry_index = terminal_menu.show()
     try:
-       #return [{"InstanceId": options[menu_entry_index].split(':')[0], "Name": options[menu_entry_index].split(':')[1]}]
-       return [instances[menu_entry_index]]
+        return [instances[menu_entry_index]]
     except:
-       return []
+        return []
 
 
 def list_ec2(instances):
@@ -140,18 +159,29 @@ def ssm_ec2(instances, fargs):
         _ = [sysexec("aws ssm start-session --target {}".format(server['InstanceId'])) for server in instances]
 
 
-if __name__ == '__main__':
+def main():
     parser = ArgumentParser()
-    parser.add_argument("text", help="String to search for in the NAME tag of EC2 instances", nargs="+")
+    parser.add_argument("text", help="String to search for in the NAME tag of EC2 instances", nargs=1)
     parser.add_argument("--all", help="When True: Connect to all EC2 instances searched for. When False: Interactively select which instance to connect to. Default: False", action="store_true", default=False)
-    instance = parser.add_mutually_exclusive_group()
-    instance.add_argument("-i", "--instanceid", help="Search for EC2 instance(s) using the Instance ID", action="store_true")
-    instance.add_argument("-p", "--privateip", help="Search for EC2 instance(s) using the IP address", action="store_true")
-    connection = parser.add_mutually_exclusive_group()
-    connection.add_argument("--ssm", help="Connect via a SSM Session to the EC2 instance(s)", action="store_true", default=False)
-    connection.add_argument("--ssh", help="Connect via SSH to the EC2 instance(s)", action="store_true", default=False)
-    parser.add_argument("-u", "--user", help="User to connect as (SSH only)")
-    parser.add_argument("-w", "--window", help="Open the connection in a new window", action="store_true", default=False)
-    parser.add_argument("-c", "--case-sensitive", help="Perform a case-sensitive seearch", action="store_true", default=False)
+    parser.add_argument("--window", help="Open the connection in a new window", action="store_true", default=False)
+    parser.add_argument("--search", choices=['Name', 'PrivateIp', 'PublicIp', 'InstanceId'], nargs="?", default='Name', help="Search for your EC2 instane(s) on this")
+    # parser.set_defaults(func=describe_ec2)
+    connections = parser.add_subparsers(title='Connection Type', description='Choose a connection type', dest='connection', required=True, help="Choose how you want to connect to the instance(s)")
+    ssh_connection = connections.add_parser('ssh', help='Connection via SSH to the EC2 instance(s)')
+    ssh_connection.add_argument('--remote', choices=['PrivateIp', 'PublicIp'], default='PrivateIp', help="Connect to the EC2 instance(s) on this")
+    ssh_connection.add_argument('-i', '--identity', type=str, help="SSH key to use to identify yourself to the EC2 instance(s)")
+    ssh_connection.add_argument('--username', type=str, help="The username to connect to the instance(s) as")
+
+    ssm_connection = connections.add_parser('ssm', help='Connection to the instance(s) via the AWS SSM agent')
+    # ssm_connection.set_defaults(func=connect_instance_ssm)
+
     args = parser.parse_args()
-    describe_ec2(args)
+    ec2s = describe_ec2(args)
+    if args.connection == 'ssh':
+        connect_instance_ssh(ec2s, args)
+    elif args.connection == 'ssm':
+        connect_instance_ssm(ec2s, args)
+
+
+if __name__ == '__main__':
+    main()
