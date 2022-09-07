@@ -6,6 +6,7 @@ from sys import argv
 from platform import system
 from os import environ
 from os import system as sysexec
+from os.path import exists
 from platform import system
 from argparse import ArgumentParser
 from subprocess import Popen
@@ -21,12 +22,17 @@ def get_tag(arr, tagname='Name'):
             return tag['Value']
 
 
+def check_key(args):
+    '''Verify a specified key exists on the filesystem'''
+    if exists(args.key):
+        return
+
 def display_instance(inst):
     '''Display an instances details'''
     dispinst = {}
     dispinst['PrivateIpAddress'] = inst['PrivateIpAddress']
     dispinst['PublicIpAddress'] = inst['PublicIpAddress']
-    dispinst['KeyName'] = inst.get('KeyName', 'ansible_ec2_key')
+    dispinst['KeyName'] = inst.get('KeyName', 'id_rsa')
     dispinst['InstanceId'] = inst['InstanceId']
     dispinst['Name'] = get_tag(inst['Tags'], 'Name')
     return (dispinst)
@@ -132,21 +138,21 @@ async def iterm_ssh(connection):
 def ssh_ec2(instances, fargs):
     '''Connect to instances via SSH command'''
 
-    if fargs.user:
-        fargs.user = fargs.user+"@"
+    if fargs.username:
+        fargs.username = fargs.username+"@"
     else:
-        fargs.user = ""
+        fargs.username = ""
     if fargs.window:
         if system() == "Darwin":
             NSWorkspace.sharedWorkspace().launchApplication_("iTerm2")
             iterm2.run_until_complete(iterm_ssh, True)
         elif system() == "Linux":
-            _ = [sysexec("{}ssh {}".format(fargs.user, server['PrivateIpAddress'])) for server in instances]
+            _ = [sysexec("{}ssh {}".format(fargs.username, server['PrivateIpAddress'])) for server in instances]
         else:
             print("Don't know how to terminal on this system")
             exit(10)
     else:
-        _ = [sysexec("{}ssh {}".format(fargs.user, server['PrivateIpAddress'])) for server in instances]
+        _ = [sysexec("{}ssh {}".format(fargs.username, server['PrivateIpAddress'])) for server in instances]
 
 
 def ssm_ec2(instances, fargs):
@@ -171,6 +177,7 @@ def main():
     ssh_connection.add_argument('--remote', choices=['PrivateIp', 'PublicIp'], default='PrivateIp', help="Connect to the EC2 instance(s) on this")
     ssh_connection.add_argument('-i', '--identity', type=str, help="SSH key to use to identify yourself to the EC2 instance(s)")
     ssh_connection.add_argument('--username', type=str, help="The username to connect to the instance(s) as")
+    ssh_connection.add_argument('--sshkey', '--key', type=str, help="The ssh key to connect to the instance(s)", nargs='?')
 
     ssm_connection = connections.add_parser('ssm', help='Connection to the instance(s) via the AWS SSM agent')
     # ssm_connection.set_defaults(func=connect_instance_ssm)
