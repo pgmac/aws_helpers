@@ -7,7 +7,6 @@ from platform import system
 from os import environ
 from os import system as sysexec
 from os.path import exists
-from platform import system
 from argparse import ArgumentParser
 from subprocess import Popen
 from simple_term_menu import TerminalMenu
