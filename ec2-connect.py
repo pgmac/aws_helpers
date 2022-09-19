@@ -10,8 +10,6 @@ from os.path import exists
 from platform import system
 from argparse import ArgumentParser
 from subprocess import Popen
-from AppKit import NSWorkspace
-import iterm2
 from simple_term_menu import TerminalMenu
 
 
@@ -144,6 +142,9 @@ def ssh_ec2(instances, fargs):
 
     if fargs.window:
         if system() == "Darwin":
+            from AppKit import NSWorkspace
+            import iterm2
+
             NSWorkspace.sharedWorkspace().launchApplication_("iTerm2")
             iterm2.run_until_complete(iterm_ssh, True)
         elif system() == "Linux":
