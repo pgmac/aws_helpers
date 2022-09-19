@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.8
 '''Filter your list of EC2s to connect to, either via SSH or SSM'''
 
 
@@ -31,7 +31,7 @@ def display_instance(inst):
     '''Display an instances details'''
     dispinst = {}
     dispinst['PrivateIpAddress'] = inst['PrivateIpAddress']
-    dispinst['PublicIpAddress'] = inst['PublicIpAddress']
+    dispinst['PublicIpAddress'] = inst.get('PublicIpAddress', '127.0.0.1')
     dispinst['KeyName'] = inst.get('KeyName', 'id_rsa')
     dispinst['InstanceId'] = inst['InstanceId']
     dispinst['Name'] = get_tag(inst['Tags'], 'Name')
@@ -138,21 +138,21 @@ async def iterm_ssh(connection):
 def ssh_ec2(instances, fargs):
     '''Connect to instances via SSH command'''
 
-    if fargs.username:
-        fargs.username = fargs.username+"@"
-    else:
-        fargs.username = ""
+    # Clean up and decorate some options
+    fargs.username = fargs.username+"@" if fargs.username else ""
+    fargs.cipher = " -c "+fargs.cipher if fargs.cipher else ""
+
     if fargs.window:
         if system() == "Darwin":
             NSWorkspace.sharedWorkspace().launchApplication_("iTerm2")
             iterm2.run_until_complete(iterm_ssh, True)
         elif system() == "Linux":
-            _ = [sysexec("{}ssh {}".format(fargs.username, server['PrivateIpAddress'])) for server in instances]
+            _ = [sysexec("ssh {}{}{}".format(fargs.username, server["{}Address".format(fargs.remote)], fargs.cipher)) for server in instances]
         else:
             print("Don't know how to terminal on this system")
             exit(10)
     else:
-        _ = [sysexec("{}ssh {}".format(fargs.username, server['PrivateIpAddress'])) for server in instances]
+        _ = [sysexec("ssh {}{}{}".format(fargs.username, server["{}Address".format(fargs.remote)], fargs.cipher)) for server in instances]
 
 
 def ssm_ec2(instances, fargs):
@@ -178,6 +178,7 @@ def main():
     ssh_connection.add_argument('-i', '--identity', type=str, help="SSH key to use to identify yourself to the EC2 instance(s)")
     ssh_connection.add_argument('--username', type=str, help="The username to connect to the instance(s) as")
     ssh_connection.add_argument('--sshkey', '--key', type=str, help="The ssh key to connect to the instance(s)", nargs='?')
+    ssh_connection.add_argument('-c', '--cipher', type=str, help="The cipher to use to secure connections to the instance(s)", default="", nargs='?')
 
     ssm_connection = connections.add_parser('ssm', help='Connection to the instance(s) via the AWS SSM agent')
     # ssm_connection.set_defaults(func=connect_instance_ssm)
