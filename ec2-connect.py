@@ -1,5 +1,7 @@
-#!/usr/bin/env python3.8
-'''Filter your list of EC2s to connect to, either via SSH or SSM'''
+#!/usr/bin/env python3
+''' Filter your list of EC2s to connect to, either via SSH or SSM
+    You need to install the SSM session manager: https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
+'''
 
 
 from sys import argv
