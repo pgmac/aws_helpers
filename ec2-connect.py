@@ -1,18 +1,28 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
 ''' Filter your list of EC2s to connect to, either via SSH or SSM
     You need to install the SSM session manager: https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
 '''
 
 
-from sys import argv
-from activate import activate
-activate(".venv")
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "boto3==1.38.33",
+#     "botocore==1.38.33",
+#     "jmespath==1.0.1",
+#     "python-dateutil==2.9.0.post0",
+#     "s3transfer==0.13.0",
+#     "simple-term-menu==1.6.6",
+#     "six==1.17.0",
+#     "urllib3==2.4.0",
+# ]
+# ///
+
+
 from platform import system
-from os import environ
 from os import system as sysexec
 from os.path import exists
 from argparse import ArgumentParser
-from subprocess import Popen
 from simple_term_menu import TerminalMenu
 
 
@@ -151,12 +161,12 @@ def ssh_ec2(instances, fargs):
             NSWorkspace.sharedWorkspace().launchApplication_("iTerm2")
             iterm2.run_until_complete(iterm_ssh, True)
         elif system() == "Linux":
-            _ = [sysexec("ssh {}{}{}".format(fargs.username, server["{}Address".format(fargs.remote)], fargs.cipher)) for server in instances]
+            _ = [sysexec(f"ssh {fargs.username}{server["{}Address".format(fargs.remote)]}{fargs.cipher}") for server in instances]
         else:
             print("Don't know how to terminal on this system")
             exit(10)
     else:
-        _ = [sysexec("ssh {}{}{}".format(fargs.username, server["{}Address".format(fargs.remote)], fargs.cipher)) for server in instances]
+        _ = [sysexec(f"ssh {fargs.username}{server["{}Address".format(fargs.remote)]}{fargs.cipher}") for server in instances]
 
 
 def ssm_ec2(instances, fargs):
@@ -164,9 +174,9 @@ def ssm_ec2(instances, fargs):
 
     if fargs.window:
         # Open a new terminal window - it doesn't do it yet, but it will do .... someday
-        _ = [sysexec("aws ssm start-session --target {}".format(server['InstanceId'])) for server in instances]
+        _ = [sysexec(f"aws ssm start-session --target {server['InstanceId']}") for server in instances]
     else:
-        _ = [sysexec("aws ssm start-session --target {}".format(server['InstanceId'])) for server in instances]
+        _ = [sysexec(f"aws ssm start-session --target {server['InstanceId']}") for server in instances]
 
 
 def main():
@@ -181,7 +191,7 @@ def main():
     ssh_connection.add_argument('--remote', choices=['PrivateIp', 'PublicIp'], default='PrivateIp', help="Connect to the EC2 instance(s) on this")
     ssh_connection.add_argument('-i', '--identity', type=str, help="SSH key to use to identify yourself to the EC2 instance(s)")
     ssh_connection.add_argument('--username', type=str, help="The username to connect to the instance(s) as")
-    ssh_connection.add_argument('--sshkey', '--key', type=str, help="The ssh key to connect to the instance(s)", nargs='?')
+    # ssh_connection.add_argument('--sshkey', '--key', type=str, help="The ssh key to connect to the instance(s)", nargs='?')
     ssh_connection.add_argument('-c', '--cipher', type=str, help="The cipher to use to secure connections to the instance(s)", default="", nargs='?')
 
     ssm_connection = connections.add_parser('ssm', help='Connection to the instance(s) via the AWS SSM agent')
