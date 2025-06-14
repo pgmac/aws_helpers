@@ -5,6 +5,8 @@
 
 
 from sys import argv
+from activate import activate
+activate(".venv")
 from platform import system
 from os import environ
 from os import system as sysexec
