@@ -2,3 +2,4 @@
 sg.json
 *.csv
 .idea
+__pycache__/
