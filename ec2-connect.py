@@ -7,8 +7,10 @@ You need to install the SSM session manager: https://docs.aws.amazon.com/systems
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
+#     "appkit>=0.2.8",
 #     "boto3==1.38.33",
 #     "botocore==1.38.33",
+#     "iterm2>=2.10",
 #     "jmespath==1.0.1",
 #     "python-dateutil==2.9.0.post0",
 #     "s3transfer==0.13.0",
@@ -187,15 +189,36 @@ def ssm_ec2(instances, fargs):
 
     if fargs.window:
         # Open a new terminal window - it doesn't do it yet, but it will do .... someday
-        _ = [
-            sysexec(f"aws ssm start-session --target {server['InstanceId']}")
-            for server in instances
-        ]
+        try:
+            if system() == "Darwin":
+                from AppKit import NSWorkspace
+                import iterm2
+
+                NSWorkspace.sharedWorkspace().launchApplication_("iTerm2")
+                iterm2.run_until_complete(iterm_ssh, True)
+            elif system() == "Linux":
+                _ = [
+                    sysexec(
+                        f"gnome-terminal -e 'aws ssm start-session --target {server['InstanceId']}'"
+                    )
+                    for server in instances
+                ]
+            else:
+                print("Don't know how to terminal on this system")
+                exit(10)
+        except Exception as e:
+            print("Error opening new terminal window: {}".format(e))
+            exit(1)
     else:
-        _ = [
-            sysexec(f"aws ssm start-session --target {server['InstanceId']}")
-            for server in instances
-        ]
+        # Connect to the instance(s) via SSM
+        try:
+            _ = [
+                sysexec(f"aws ssm start-session --target {server['InstanceId']}")
+                for server in instances
+            ]
+        except Exception as e:
+            print("Error connecting to instance(s) via SSM: {}".format(e))
+            exit(1)
 
 
 def main():
