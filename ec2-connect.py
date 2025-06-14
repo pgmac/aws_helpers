@@ -20,10 +20,11 @@ You need to install the SSM session manager: https://docs.aws.amazon.com/systems
 # ]
 # ///
 
-from platform import system
+from argparse import ArgumentParser
 from os import system as sysexec
 from os.path import exists
-from argparse import ArgumentParser
+from platform import system
+
 from simple_term_menu import TerminalMenu
 
 
@@ -162,8 +163,8 @@ def ssh_ec2(instances, fargs):
 
     if fargs.window:
         if system() == "Darwin":
-            from AppKit import NSWorkspace
             import iterm2
+            from AppKit import NSWorkspace
 
             NSWorkspace.sharedWorkspace().launchApplication_("iTerm2")
             iterm2.run_until_complete(iterm_ssh, True)
@@ -188,15 +189,13 @@ def ssh_ec2(instances, fargs):
 
 def ssm_ec2(instances, fargs):
     """Connect to the EC2 instance(s) via an SSM Session"""
-    import AppKit
-    import iterm2
 
     if fargs.window:
         # Open a new terminal window - it doesn't do it yet, but it will do .... someday
         try:
             if system() == "Darwin":
-                from AppKit import NSWorkspace
                 import iterm2
+                from AppKit import NSWorkspace
 
                 NSWorkspace.sharedWorkspace().launchApplication_("iTerm2")
                 iterm2.run_until_complete(iterm_ssh, True)
