@@ -16,9 +16,13 @@ def in_virtualenv():
 def activate(env_name):
     if not in_virtualenv():
         python_ver = f"python{sys.version_info.major}.{sys.version_info.minor}"
-        subprocess.run("source ./" + env_name + "/bin/activate", shell = True)
-        sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__),
+        subprocess.run(f"source {os.path.abspath(os.path.join(os.path.dirname(__file__),
+                            env_name,
+                            "bin",
+                            "activate"))}", shell = True)
+        pypath = os.path.abspath(os.path.join(os.path.dirname(__file__),
                             env_name,
                             "lib",
                             python_ver,
-                            "site-packages")))
+                            "site-packages"))
+        sys.path.insert(0, pypath)
