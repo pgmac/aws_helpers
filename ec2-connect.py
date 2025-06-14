@@ -80,17 +80,21 @@ def describe_ec2(filter_args):
     ec2 = boto3.client("ec2")
     for text in filter_args.text:
         # print(f"Searching for EC2 instances matching '*{text}*'")
-        response = ec2.describe_instances(
-            Filters=[
-                {"Name": _filter_name, "Values": case_insensivise(text)},
-                {"Name": "instance-state-name", "Values": ["running"]},
+        try:
+            response = ec2.describe_instances(
+                Filters=[
+                    {"Name": _filter_name, "Values": case_insensivise(text)},
+                    {"Name": "instance-state-name", "Values": ["running"]},
+                ]
+            )
+            results = [
+                display_instance(item)
+                for res in response["Reservations"]
+                for item in res["Instances"]
             ]
-        )
-        results = [
-            display_instance(item)
-            for res in response["Reservations"]
-            for item in res["Instances"]
-        ]
+        except Exception as e:
+            print("Error fetching EC2 instances: {}".format(e))
+            results = []
         results = sorted(results, key=lambda k: (k["Name"], k["InstanceId"]))
         if filter_args.all and not filter_args.ssh and not filter_args.ssm:
             list_ec2(results)
