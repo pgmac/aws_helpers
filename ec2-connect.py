@@ -8,15 +8,15 @@ You need to install the SSM session manager: https://docs.aws.amazon.com/systems
 # requires-python = ">=3.13"
 # dependencies = [
 #     "appkit>=0.2.8",
-#     "boto3==1.38.33",
-#     "botocore==1.38.33",
+#     "boto3>=1.38.33",
+#     "botocore>=1.38.33",
 #     "iterm2>=2.10",
-#     "jmespath==1.0.1",
-#     "python-dateutil==2.9.0.post0",
-#     "s3transfer==0.13.0",
-#     "simple-term-menu==1.6.6",
-#     "six==1.17.0",
-#     "urllib3==2.4.0",
+#     "jmespath>=1.0.1",
+#     "python-dateutil>=2.9.0.post0",
+#     "s3transfer>=0.13.0",
+#     "simple-term-menu>=1.6.6",
+#     "six>=1.17.0",
+#     "urllib3>=2.4.0",
 # ]
 # ///
 
@@ -146,6 +146,8 @@ def list_ec2(instances):
 async def iterm_ssh(connection):
     """Open a new window to make the connection in"""
     """This currently doesn't work (as you can see via the command below)"""
+    import iterm2
+
     app = await iterm2.async_get_app(connection)
     await app.async_activate()
     await iterm2.Window.async_create(connection, command="/bin/bash -l -c vi")
@@ -186,6 +188,8 @@ def ssh_ec2(instances, fargs):
 
 def ssm_ec2(instances, fargs):
     """Connect to the EC2 instance(s) via an SSM Session"""
+    import AppKit
+    import iterm2
 
     if fargs.window:
         # Open a new terminal window - it doesn't do it yet, but it will do .... someday
