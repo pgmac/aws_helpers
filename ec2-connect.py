@@ -24,7 +24,6 @@ You need to install the SSM session manager: https://docs.aws.amazon.com/systems
 from argparse import ArgumentParser
 from os import system as sysexec
 from os.path import exists
-from platform import system
 
 import argcomplete
 from simple_term_menu import TerminalMenu
@@ -154,16 +153,6 @@ def list_ec2(instances):
     ]
 
 
-async def iterm_ssh(connection):
-    """Open a new window to make the connection in"""
-    """This currently doesn't work (as you can see via the command below)"""
-    import iterm2
-
-    app = await iterm2.async_get_app(connection)
-    await app.async_activate()
-    await iterm2.Window.async_create(connection, command="/bin/bash -l -c vi")
-
-
 def ssh_ec2(instances, fargs):
     """Connect to instances via SSH command"""
 
@@ -171,68 +160,26 @@ def ssh_ec2(instances, fargs):
     fargs.username = fargs.username + "@" if fargs.username else ""
     fargs.cipher = " -c " + fargs.cipher if fargs.cipher else ""
 
-    # The trick with --window is forking the process to open a new terminal window and letting this python script complete and exit
-    if fargs.window:
-        if system() == "Darwin":
-            import iterm2
-            from AppKit import NSWorkspace
-
-            NSWorkspace.sharedWorkspace().launchApplication_("iTerm2")
-            iterm2.run_until_complete(iterm_ssh, True)
-        elif system() == "Linux":
-            _ = [
-                sysexec(
-                    f"ssh {fargs.username}{server['{}Address'.format(fargs.remote)]}{fargs.cipher}"
-                )
-                for server in instances
-            ]
-        else:
-            print("Don't know how to terminal on this system")
-            exit(10)
-    else:
-        _ = [
-            sysexec(
-                f"ssh {fargs.username}{server['{}Address'.format(fargs.remote)]}{fargs.cipher}"
-            )
-            for server in instances
-        ]
+    _ = [
+        sysexec(
+            f"ssh {fargs.username}{server['{}Address'.format(fargs.remote)]}{fargs.cipher}"
+        )
+        for server in instances
+    ]
 
 
 def ssm_ec2(instances, fargs):
     """Connect to the EC2 instance(s) via an SSM Session"""
 
-    if fargs.window:
-        # Open a new terminal window - it doesn't do it yet, but it will do .... someday
-        try:
-            if system() == "Darwin":
-                import iterm2
-                from AppKit import NSWorkspace
-
-                NSWorkspace.sharedWorkspace().launchApplication_("iTerm2")
-                iterm2.run_until_complete(iterm_ssh, True)
-            elif system() == "Linux":
-                _ = [
-                    sysexec(
-                        f"gnome-terminal -e 'aws ssm start-session --target {server['InstanceId']}'"
-                    )
-                    for server in instances
-                ]
-            else:
-                print("Don't know how to terminal on this system")
-                exit(10)
-        except Exception as e:
-            print("Error opening new terminal window: {}".format(e))
-            exit(1)
-    else:
-        # Connect to the instance(s) via SSM
-        try:
-            _ = [
-                sysexec(f"aws ssm start-session --target {server['InstanceId']}")
-                for server in instances
-            ]
-        except Exception as e:
-            print("Error connecting to instance(s) via SSM: {}".format(e))
-            exit(1)
+    # Connect to the instance(s) via SSM
+    try:
+        _ = [
+            sysexec(f"aws ssm start-session --target {server['InstanceId']}")
+            for server in instances
+        ]
+    except Exception as e:
+        print("Error connecting to instance(s) via SSM: {}".format(e))
+        exit(1)
 
 
 def main():
@@ -246,13 +193,6 @@ def main():
         action="store_true",
         default=False,
     )
-    # Not going to include this for now. It _may_ come back later if/when I can figure out how to open a new terminal window in a cross-platform way
-    # parser.add_argument(
-    #     "--window",
-    #     help="Open the connection in a new window",
-    #     action="store_true",
-    #     default=False,
-    # )
     parser.add_argument(
         "--search",
         choices=["Name", "PrivateIp", "PublicIp", "InstanceId"],
