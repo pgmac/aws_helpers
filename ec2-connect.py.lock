@@ -5,15 +5,16 @@ requires-python = ">=3.13"
 [manifest]
 requirements = [
     { name = "appkit", specifier = ">=0.2.8" },
-    { name = "boto3", specifier = "==1.38.33" },
-    { name = "botocore", specifier = "==1.38.33" },
+    { name = "argcomplete", specifier = ">=3.6.2" },
+    { name = "boto3", specifier = ">=1.38.33" },
+    { name = "botocore", specifier = ">=1.38.33" },
     { name = "iterm2", specifier = ">=2.10" },
-    { name = "jmespath", specifier = "==1.0.1" },
-    { name = "python-dateutil", specifier = "==2.9.0.post0" },
-    { name = "s3transfer", specifier = "==0.13.0" },
-    { name = "simple-term-menu", specifier = "==1.6.6" },
-    { name = "six", specifier = "==1.17.0" },
-    { name = "urllib3", specifier = "==2.4.0" },
+    { name = "jmespath", specifier = ">=1.0.1" },
+    { name = "python-dateutil", specifier = ">=2.9.0.post0" },
+    { name = "s3transfer", specifier = ">=0.13.0" },
+    { name = "simple-term-menu", specifier = ">=1.6.6" },
+    { name = "six", specifier = ">=1.17.0" },
+    { name = "urllib3", specifier = ">=2.4.0" },
 ]
 
 [[package]]
@@ -26,6 +27,15 @@ dependencies = [
     { name = "pygobject" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/8b/93/5d77e3cccb45a065e9853869af66cf9b09353f51c629cfe040d094620866/AppKit-0.2.8.tar.gz", hash = "sha256:cc2d1feda600884efffe9583b15f7a8c43f874f3f448bbb3d7afc20ec0caeaa0", size = 7563, upload-time = "2014-05-19T20:25:57.758Z" }
+
+[[package]]
+name = "argcomplete"
+version = "3.6.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/16/0f/861e168fc813c56a78b35f3c30d91c6757d1fd185af1110f1aec784b35d0/argcomplete-3.6.2.tar.gz", hash = "sha256:d0519b1bc867f5f4f4713c41ad0aba73a4a5f007449716b16f385f2166dc6adf", size = 73403, upload-time = "2025-04-03T04:57:03.52Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/31/da/e42d7a9d8dd33fa775f467e4028a47936da2f01e4b0e561f9ba0d74cb0ca/argcomplete-3.6.2-py3-none-any.whl", hash = "sha256:65b3133a29ad53fb42c48cf5114752c7ab66c1c38544fdf6460f450c09b42591", size = 43708, upload-time = "2025-04-03T04:57:01.591Z" },
+]
 
 [[package]]
 name = "beautifulsoup4"

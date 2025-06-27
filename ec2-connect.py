@@ -8,6 +8,7 @@ You need to install the SSM session manager: https://docs.aws.amazon.com/systems
 # requires-python = ">=3.13"
 # dependencies = [
 #     "appkit>=0.2.8",
+#     "argcomplete>=3.6.2",
 #     "boto3>=1.38.33",
 #     "botocore>=1.38.33",
 #     "iterm2>=2.10",
@@ -25,6 +26,7 @@ from os import system as sysexec
 from os.path import exists
 from platform import system
 
+import argcomplete
 from simple_term_menu import TerminalMenu
 
 
@@ -62,6 +64,10 @@ def case_insensivise(case_str):
     str_arr.append("*{}*".format(case_str.upper()))
 
     return str_arr
+
+
+def complete_ec2s(prefix, parsed_args, **kwargs):
+    return describe_ec2(parsed_args)
 
 
 def describe_ec2(filter_args):
@@ -165,6 +171,7 @@ def ssh_ec2(instances, fargs):
     fargs.username = fargs.username + "@" if fargs.username else ""
     fargs.cipher = " -c " + fargs.cipher if fargs.cipher else ""
 
+    # The trick with --window is forking the process to open a new terminal window and letting this python script complete and exit
     if fargs.window:
         if system() == "Darwin":
             import iterm2
@@ -239,18 +246,21 @@ def main():
         action="store_true",
         default=False,
     )
-    parser.add_argument(
-        "--window",
-        help="Open the connection in a new window",
-        action="store_true",
-        default=False,
-    )
+    # Not going to include this for now. It _may_ come back later if/when I can figure out how to open a new terminal window in a cross-platform way
+    # parser.add_argument(
+    #     "--window",
+    #     help="Open the connection in a new window",
+    #     action="store_true",
+    #     default=False,
+    # )
     parser.add_argument(
         "--search",
         choices=["Name", "PrivateIp", "PublicIp", "InstanceId"],
         nargs="?",
-        default="Name",
+        default="InstanceId",
         help="Search for your EC2 instane(s) on this",
+    ).completer = argcomplete.completers.ChoicesCompleter(
+        ("Name", "PrivateIp", "PublicIp", "InstanceId")
     )
     # parser.set_defaults(func=describe_ec2)
     connections = parser.add_subparsers(
@@ -293,6 +303,7 @@ def main():
     )
     # ssm_connection.set_defaults(func=connect_instance_ssm)
 
+    argcomplete.autocomplete(parser)
     args = parser.parse_args()
     ec2s = describe_ec2(args)
     if args.connection == "ssh":
