@@ -66,6 +66,7 @@ def case_insensivise(case_str):
 
 
 def complete_ec2s(prefix, parsed_args, **kwargs):
+    """Complete the EC2 instances based on the prefix, supposed to be used with argcomplete, but doesn't work with current argparse configuraion"""
     return describe_ec2(parsed_args)
 
 
